@@ -1,5 +1,5 @@
 {
-  "version": "0.0.5",
+  "version": "0.0.6",
   "name": "phptest",
   "description": "Test helper library for PHP core runtime components",
   "keywords": [
