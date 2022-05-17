@@ -13,27 +13,30 @@ var _ = require('microdash'),
     escapeRegex = require('regexp.escape'),
     path = require('path'),
     mochaPath = path.dirname(require.resolve('mocha/package.json')),
-    phpCorePath = path.resolve(__dirname, '../..'),
     phpToAST = require('phptoast'),
     phpToJS = require('phptojs'),
     util = require('util'),
-    OpcodeExecutor = require('phpcore/src/Core/Opcode/Handler/OpcodeExecutor'),
-    Reference = require('../../src/Reference/Reference'),
     SourceMapConsumer = require('source-map').SourceMapConsumer,
-    Value = require('../../src/Value').sync(),
-    Variable = require('../../src/Variable').sync(),
-    WeakMap = require('es6-weak-map'),
-    runtimeFactory = require('../../src/shared/runtimeFactory');
+    WeakMap = require('es6-weak-map');
 
 /**
  * Creates an integration test helper tools object.
  *
- * @param {Function} initRuntime
+ * @param {string} phpCorePath
+ * @param {Function=} initRuntime
  * @returns {Object}
  */
-module.exports = function (initRuntime) {
-    // A map that allows looking up the source map data for a module later on
-    var moduleDataMap = new WeakMap(),
+module.exports = function (phpCorePath, initRuntime) {
+    var
+        OpcodeExecutor = require(phpCorePath + '/src/Core/Opcode/Handler/OpcodeExecutor'),
+        Reference = require(phpCorePath + '/src/Reference/Reference'),
+        Value = require(phpCorePath + '/src/Value').sync(),
+        Variable = require(phpCorePath + '/src/Variable').sync(),
+        runtimeFactory = require(phpCorePath + '/src/shared/runtimeFactory'),
+
+        // A map that allows looking up the source map data for a module later on.
+        moduleDataMap = new WeakMap(),
+
         /**
          * Creates a Runtime with the given mode.
          *
