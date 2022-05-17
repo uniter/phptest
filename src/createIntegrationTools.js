@@ -28,11 +28,12 @@ var _ = require('microdash'),
  */
 module.exports = function (phpCorePath, initRuntime) {
     var
-        OpcodeExecutor = require(phpCorePath + '/src/Core/Opcode/Handler/OpcodeExecutor'),
-        Reference = require(phpCorePath + '/src/Reference/Reference'),
-        Value = require(phpCorePath + '/src/Value').sync(),
-        Variable = require(phpCorePath + '/src/Variable').sync(),
-        runtimeFactory = require(phpCorePath + '/src/shared/runtimeFactory'),
+        resolvedPHPCorePath = path.resolve(phpCorePath),
+        OpcodeExecutor = require(resolvedPHPCorePath + '/src/Core/Opcode/Handler/OpcodeExecutor'),
+        Reference = require(resolvedPHPCorePath + '/src/Reference/Reference'),
+        Value = require(resolvedPHPCorePath + '/src/Value').sync(),
+        Variable = require(resolvedPHPCorePath + '/src/Variable').sync(),
+        runtimeFactory = require(resolvedPHPCorePath + '/src/shared/runtimeFactory'),
 
         // A map that allows looking up the source map data for a module later on.
         moduleDataMap = new WeakMap(),
@@ -243,7 +244,7 @@ module.exports = function (phpCorePath, initRuntime) {
                     stack = stack.replace(
                         // Find stack frames for the transpiled PHP code - source maps would not be handled natively
                         // even if we embedded them in the generated JS, so we need to perform manual mapping
-                        /\(eval at transpile \(.*\/test\/integration\/tools.js:\d+:\d+\), <anonymous>:(\d+):(\d+)\)/g,
+                        /\(eval at transpile \(.*\/phptest\/src\/createIntegrationTools\.js:\d+:\d+\), <anonymous>:(\d+):(\d+)\)/g,
                         function (all, line, column) {
                             var mappedPosition = sourceMapConsumer.originalPositionFor({
                                 // Note: These number casts are required, the source-map library
@@ -272,7 +273,7 @@ module.exports = function (phpCorePath, initRuntime) {
                     stack = stack.replace(/(?:(?:.*\/path\/to\/internal.*)([\r\n]*))+/mg, '    at [Node.js internals]$1');
 
                     // Normalise PHPCore frames
-                    stack = stack.replace(new RegExp(escapeRegex(phpCorePath), 'g'), '/path/to/phpcore');
+                    stack = stack.replace(new RegExp(escapeRegex(resolvedPHPCorePath), 'g'), '/path/to/phpcore');
 
                     return stack;
                 });
