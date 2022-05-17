@@ -44,7 +44,9 @@ module.exports = function (phpCorePath, initRuntime) {
          * @returns {Runtime}
          */
         createRuntime = function (mode) {
-            return initRuntime(runtimeFactory.create(mode));
+            var runtime = runtimeFactory.create(mode);
+
+            return initRuntime ? initRuntime(runtime) : runtime;
         },
 
         createAsyncRuntime = function () {
@@ -135,12 +137,6 @@ module.exports = function (phpCorePath, initRuntime) {
             'return new Error().stack;'
         )()
             .match(/<anonymous>:(\d+):\d+/)[1] - 1;
-
-    if (!initRuntime) {
-        initRuntime = function (runtime) {
-            return runtime;
-        };
-    }
 
     // Force all opcodes to be async for all async mode tests, to help ensure async handling is in place.
     asyncRuntime.install({
