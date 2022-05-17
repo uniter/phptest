@@ -36,9 +36,9 @@
   },
   "peerDependencies": {
     "core-js-pure": "^3.21.1",
-    "mocha": "^9.2.2",
+    "mocha": "^10.0.0",
     "phptoast": "^9.0.1",
-    "phptojs": "^9.0.0"
+    "phptojs": "^9.0.1"
   },
   "engines": {
     "node": ">=12"
