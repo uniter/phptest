@@ -29,7 +29,7 @@
     "lie": "^3.3.0",
     "microdash": "^1.4.2",
     "regexp.escape": "^1.1.0",
-    "source-map": "^0.7.3"
+    "source-map": "^0.8.0-beta.0"
   },
   "devDependencies": {
     "phpcore": "^7.1.0"
