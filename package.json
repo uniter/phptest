@@ -1,0 +1,45 @@
+{
+  "version": "0.0.1",
+  "name": "phptest",
+  "description": "Test helper library for PHP core runtime components",
+  "keywords": [
+    "php",
+    "test",
+    "uniter"
+  ],
+  "homepage": "https://github.com/uniter/phptest",
+  "author": "Dan Phillimore <dan@ovms.co> (https://github.com/asmblah)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uniter/phptest"
+  },
+  "bugs": {
+    "email": "dan@ovms.co",
+    "url": "https://github.com/uniter/phptest/issues"
+  },
+  "main": "index",
+  "scripts": {
+    "jshint": "jshint .",
+    "test": "npm run jshint"
+  },
+  "dependencies": {
+    "es6-weak-map": "^2.0.3",
+    "is-promise": "^4.0.0",
+    "jshint": "^2.13.4",
+    "lie": "^3.3.0",
+    "microdash": "^1.4.2",
+    "regexp.escape": "^1.1.0",
+    "source-map": "^0.7.3"
+  },
+  "peerDependencies": {
+    "core-js-pure": "^3.21.1",
+    "mocha": "^9.2.2",
+    "phpcore": "^7.1.0",
+    "phptoast": "^9.0.1",
+    "phptojs": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "license": "MIT"
+}
