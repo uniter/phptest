@@ -110,6 +110,8 @@ module.exports = function (phpCorePath, initRuntime) {
                 return phpCore;
             });
 
+            // Note that we do not support setting additional module options for PHPCore,
+            // because module-level options are deprecated in favour of environment-level ones.
             if (path !== null) {
                 module = module.using({
                     path: path
@@ -181,7 +183,7 @@ module.exports = function (phpCorePath, initRuntime) {
                                         result.setValue(value).next(resolve, reject);
                                     });
                                 }, function (reference) {
-                                    return result.setReference(reference);
+                                    return result.setReference(reference.getReference());
                                 });
                             }
 
