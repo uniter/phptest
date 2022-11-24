@@ -24,9 +24,10 @@ var _ = require('microdash'),
  *
  * @param {string} phpCorePath
  * @param {Function=} initRuntime
+ * @param {boolean=} forceOpcodesAsync
  * @returns {Object}
  */
-module.exports = function (phpCorePath, initRuntime) {
+module.exports = function (phpCorePath, initRuntime, forceOpcodesAsync) {
     var
         resolvedPHPCorePath = path.resolve(phpCorePath),
         OpcodeExecutor = require(resolvedPHPCorePath + '/src/Core/Opcode/Handler/OpcodeExecutor'),
@@ -126,6 +127,93 @@ module.exports = function (phpCorePath, initRuntime) {
             return module;
         },
 
+        /**
+         * Forces all opcodes to be async for all async mode tests, to help ensure async handling is in place.
+         *
+         * @param {Runtime} runtime
+         */
+        installForcedAsyncOpcodeHook = function (runtime) {
+            runtime.install({
+                serviceGroups: [
+                    function (internals) {
+                        var get = internals.getServiceFetcher();
+
+                        // As we'll be overriding the "opcode_executor" service.
+                        internals.allowServiceOverride();
+
+                        return {
+                            'opcode_executor': function () {
+                                var controlBridge = get('control_bridge'),
+                                    futureFactory = get('future_factory'),
+                                    referenceFactory = get('reference_factory'),
+                                    valueFactory = get('value_factory');
+
+                                function AsyncOpcodeExecutor() {
+                                }
+
+                                util.inherits(AsyncOpcodeExecutor, OpcodeExecutor);
+
+                                AsyncOpcodeExecutor.prototype.execute = function (opcode) {
+                                    var result = opcode.handle();
+
+                                    if (!opcode.isTraced()) {
+                                        // Don't attempt to make any untraced opcodes pause,
+                                        // as resuming from inside them is not possible.
+                                        return result;
+                                    }
+
+                                    if (controlBridge.isFuture(result) && result.isSettled()) {
+                                        // Wrap settled Futures in a deferring one to force a pause.
+                                        return futureFactory.createAsyncPresent(result);
+                                    }
+
+                                    if (result instanceof Value) {
+                                        return valueFactory.createAsyncPresent(result);
+                                    }
+
+                                    if (result instanceof Reference || result instanceof Variable) {
+                                        return referenceFactory.createAccessor(function () {
+                                            // Defer returning the value of the reference.
+                                            return valueFactory.createAsyncPresent(result.getValue());
+                                        }, function (value) {
+                                            // Defer assignment in a microtask to test for async handling.
+                                            return valueFactory.createAsyncMicrotaskFuture(function (resolve, reject) {
+                                                result.setValue(value).next(resolve, reject);
+                                            });
+                                        }, function () {
+                                            return result.unset();
+                                        }, function () {
+                                            return result.getReference();
+                                        }, function (reference) {
+                                            result.setReference(reference);
+                                        }, function () {
+                                            result.clearReference();
+                                        }, function () {
+                                            return result.isDefined();
+                                        }, function () {
+                                            return result.isReadable();
+                                        }, function () {
+                                            return result.isEmpty();
+                                        }, function () {
+                                            return result.isSet();
+                                        }, function () {
+                                            return result.isReference();
+                                        }, function () {
+                                            return result.raiseUndefined();
+                                        });
+                                    }
+
+                                    return result;
+                                };
+
+                                return new AsyncOpcodeExecutor();
+                            }
+                        };
+                    }
+                ]
+            });
+        },
+
         // Create isolated runtimes to be shared by all tests that don't create their own,
         // to avoid modifying the singleton module exports.
         asyncRuntime = createAsyncRuntime(),
@@ -141,61 +229,9 @@ module.exports = function (phpCorePath, initRuntime) {
         )()
             .match(/<anonymous>:(\d+):\d+/)[1] - 1;
 
-    // Force all opcodes to be async for all async mode tests, to help ensure async handling is in place.
-    asyncRuntime.install({
-        serviceGroups: [
-            function (internals) {
-                var get = internals.getServiceFetcher();
-
-                // As we'll be overriding the "opcode_executor" service.
-                internals.allowServiceOverride();
-
-                return {
-                    'opcode_executor': function () {
-                        var referenceFactory = get('reference_factory'),
-                            valueFactory = get('value_factory');
-
-                        function AsyncOpcodeExecutor() {
-                        }
-
-                        util.inherits(AsyncOpcodeExecutor, OpcodeExecutor);
-
-                        AsyncOpcodeExecutor.prototype.execute = function (opcode) {
-                            var result = opcode.handle();
-
-                            if (!opcode.isTraced()) {
-                                // Don't attempt to make any untraced opcodes pause,
-                                // as resuming from inside them is not possible.
-                                return result;
-                            }
-
-                            if (result instanceof Value) {
-                                return valueFactory.createAsyncPresent(result);
-                            }
-
-                            if (result instanceof Reference || result instanceof Variable) {
-                                return referenceFactory.createAccessor(function () {
-                                    // Defer returning the value of the reference.
-                                    return valueFactory.createAsyncPresent(result.getValue());
-                                }, function (value) {
-                                    // Defer assignment in a microtask to test for async handling.
-                                    return valueFactory.createAsyncMicrotaskFuture(function (resolve, reject) {
-                                        result.setValue(value).next(resolve, reject);
-                                    });
-                                }, function (reference) {
-                                    return result.setReference(reference.getReference());
-                                });
-                            }
-
-                            return result;
-                        };
-
-                        return new AsyncOpcodeExecutor();
-                    }
-                };
-            }
-        ]
-    });
+    if (forceOpcodesAsync !== false) {
+        installForcedAsyncOpcodeHook(asyncRuntime);
+    }
 
     return {
         asyncRuntime: asyncRuntime,
@@ -219,6 +255,8 @@ module.exports = function (phpCorePath, initRuntime) {
         },
 
         createSyncRuntime: createSyncRuntime,
+
+        installForcedAsyncOpcodeHook: installForcedAsyncOpcodeHook,
 
         /**
          * Attempts to make this integration test slightly less brittle when future changes occur,
