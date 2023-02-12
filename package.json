@@ -33,9 +33,9 @@
     "phpcore": "^7.2.0"
   },
   "peerDependencies": {
-    "mocha": "^10.0.0",
-    "phptoast": "^9.0.1",
-    "phptojs": "^9.0.1"
+    "mocha": "^10.2.0",
+    "phptoast": "^9.1.0",
+    "phptojs": "^10.0.0"
   },
   "engines": {
     "node": ">=12"
