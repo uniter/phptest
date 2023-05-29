@@ -181,7 +181,7 @@ module.exports = function (phpCorePath, initRuntime, forceOpcodesAsync) {
                                                 result.setValue(value).next(resolve, reject);
                                             });
                                         }, function () {
-                                            return result.unset();
+                                            return futureFactory.createAsyncPresent(result.unset());
                                         }, function () {
                                             return result.getReference();
                                         }, function (reference) {
@@ -193,13 +193,13 @@ module.exports = function (phpCorePath, initRuntime, forceOpcodesAsync) {
                                         }, function () {
                                             return result.isReadable();
                                         }, function () {
-                                            return result.isEmpty();
+                                            return futureFactory.createAsyncPresent(result.isEmpty());
                                         }, function () {
-                                            return result.isSet();
+                                            return futureFactory.createAsyncPresent(result.isSet());
                                         }, function () {
                                             return result.isReference();
                                         }, function () {
-                                            return result.raiseUndefined();
+                                            return futureFactory.createAsyncPresent(result.raiseUndefined());
                                         });
                                     }
 
